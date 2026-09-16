@@ -55,6 +55,31 @@ HACS 会自动把集成放到 `/config/custom_components/chinese_calendar`。首
 | `show_details` | `true` | 是否显示日期详情和宜忌 |
 | `show_header` | `true` | 是否显示卡片自身标题；弹窗版建议保留，便于显示标题与关闭按钮 |
 
+## 简洁仪表盘入口与 Pad 弹窗
+
+仪表盘建议只放一个入口卡片，点击后再打开完整万年历弹窗。项目提供了可直接复制的示例：
+`dashboard/chinese-calendar-entry.yaml`。该示例使用 Home Assistant 自带的 `button` 卡片，
+不需要额外安装 Mushroom 或 Button Card。
+
+```yaml
+type: button
+name: 中华万年历
+icon: mdi:calendar-star
+show_state: true
+entity: sensor.今日农历
+tap_action:
+  action: fire-dom-event
+  browser_mod:
+    service: browser_mod.popup
+    data:
+      title: 中华万年历
+      size: fullscreen
+      content:
+        type: custom:chinese-calendar-card
+        show_details: true
+        show_header: true
+```
+
 ## 用作 Pad 弹窗
 
 卡片在宽度大于 `900px` 时自动显示三栏 Pad 布局；手机宽度自动改成纵向信息流。
@@ -66,7 +91,7 @@ browser_mod:
   service: browser_mod.popup
   data:
     title: 中华万年历
-    size: wide
+    size: fullscreen
     content:
       type: custom:chinese-calendar-card
       show_details: true

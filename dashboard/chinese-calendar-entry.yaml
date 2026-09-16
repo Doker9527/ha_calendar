@@ -1,0 +1,16 @@
+type: button
+name: 中华万年历
+icon: mdi:calendar-star
+show_state: true
+entity: sensor.今日农历
+tap_action:
+  action: fire-dom-event
+  browser_mod:
+    service: browser_mod.popup
+    data:
+      title: 中华万年历
+      size: fullscreen
+      content:
+        type: custom:chinese-calendar-card
+        show_details: true
+        show_header: true
