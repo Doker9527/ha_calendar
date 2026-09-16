@@ -65,8 +65,6 @@ HACS 会自动把集成放到 `/config/custom_components/chinese_calendar`。首
 type: button
 name: 中华万年历
 icon: mdi:calendar-star
-show_state: true
-entity: sensor.今日农历
 tap_action:
   action: fire-dom-event
   browser_mod:
