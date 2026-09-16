@@ -76,8 +76,9 @@ tap_action:
       size: fullscreen
       content:
         type: custom:chinese-calendar-card
-        show_details: true
-        show_header: true
+        compact: true
+        show_details: false
+        show_header: false
 ```
 
 ## 用作 Pad 弹窗
