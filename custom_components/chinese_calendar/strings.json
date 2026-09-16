@@ -1,0 +1,15 @@
+{
+  "title": "中华万年历",
+  "config": {
+    "step": {
+      "user": {
+        "title": "添加中华万年历",
+        "description": "所有农历和黄历数据均在 Home Assistant 本地计算。"
+      }
+    },
+    "abort": {
+      "already_configured": "中华万年历已经配置。"
+    }
+  }
+}
+

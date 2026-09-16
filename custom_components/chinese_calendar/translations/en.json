@@ -1,0 +1,15 @@
+{
+  "title": "Chinese Calendar",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Chinese Calendar",
+        "description": "Lunar calendar and almanac data are calculated locally in Home Assistant."
+      }
+    },
+    "abort": {
+      "already_configured": "Chinese Calendar is already configured."
+    }
+  }
+}
+
