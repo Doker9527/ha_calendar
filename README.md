@@ -7,7 +7,7 @@
 ## 功能
 
 - 通过“设备与服务”界面添加，无需 YAML 配置集成
-- `sensor.今日农历` 实体及完整黄历属性
+- 今日农历传感器及完整黄历属性（实体 ID 以 Home Assistant 中实际生成的为准）
 - 六周、42 格月历，不同月份切换时布局不跳动
 - 日期详情、宜忌、冲煞与吉方位
 - 使用 Home Assistant 主题变量，自动适配浅色和深色主题
@@ -34,7 +34,7 @@ HACS 会自动把集成放到 `/config/custom_components/chinese_calendar`。首
 4. 打开 **设置 → 仪表盘 → 资源**，添加：
 
    ```text
-   /chinese-calendar/chinese-calendar-card.js?v=0.1.0
+   /chinese-calendar/chinese-calendar-card.js?v=0.1.1
    ```
 
    资源类型选择“JavaScript 模块”。
@@ -53,59 +53,58 @@ HACS 会自动把集成放到 `/config/custom_components/chinese_calendar`。首
 | `type` | 必填 | `custom:chinese-calendar-card` |
 | `title` | `中华万年历` | 卡片标题 |
 | `show_details` | `true` | 是否显示日期详情和宜忌 |
-| `show_header` | `true` | 是否显示卡片自身标题；弹窗版建议保留，便于显示标题与关闭按钮 |
+| `show_header` | `true` | 是否显示卡片自身标题；Browser Mod 已提供弹窗标题时设为 `false` |
+| `compact` | `false` | 将完整卡片限制在适合弹窗的最大宽度，保留黄历内容 |
 
-## 简洁仪表盘入口与 Pad 弹窗
+## 仪表盘入口与弹窗
 
-仪表盘建议只放一个入口卡片，点击后再打开完整万年历弹窗。项目提供了可直接复制的示例：
-`dashboard/chinese-calendar-entry.yaml`。该示例使用 Home Assistant 自带的 `button` 卡片，
-不需要额外安装 Mushroom 或 Button Card。
+在仪表盘中添加一张“手动”卡片，切换到 YAML 编辑，粘贴下面配置。仪表盘只显示一张横向 Tile 卡片，名称下面显示今日农历；点击后打开完整万年历。`sensor.jin_ri_nong_li` 是示例中使用的实际实体 ID，如果你的实体 ID 不同，请替换。
+
+需要先安装 Browser Mod，并在 **设置 → 仪表盘 → 资源** 中加入 `/chinese-calendar/chinese-calendar-card.js?v=0.1.1`，资源类型选择“JavaScript 模块”。升级前端文件后，更改 URL 中的版本号或强制刷新浏览器缓存。
 
 ```yaml
-type: button
-name: 中华万年历
-icon: mdi:calendar-star
+type: tile
 entity: sensor.jin_ri_nong_li
-show_state: true
+name: 中华万年历
+icon: mdi:calendar-month-outline
+color: blue
+vertical: false
+state_content: state
 tap_action:
   action: fire-dom-event
   browser_mod:
     service: browser_mod.popup
     data:
       title: 中华万年历
-      size: fullscreen
+      initial_style: wide
       content:
         type: custom:chinese-calendar-card
         compact: true
-        show_details: false
+        show_details: true
+        show_header: false
+icon_tap_action:
+  action: fire-dom-event
+  browser_mod:
+    service: browser_mod.popup
+    data:
+      title: 中华万年历
+      initial_style: wide
+      content:
+        type: custom:chinese-calendar-card
+        compact: true
+        show_details: true
         show_header: false
 ```
 
-## 用作 Pad 弹窗
+`fire-dom-event` 是 Browser Mod 的自定义动作。Home Assistant 的可视化编辑器可能提示“不支持可视化编辑器”，这不代表 YAML 无效；继续使用 YAML 编辑并保存即可。
 
-卡片在宽度大于 `900px` 时自动显示三栏 Pad 布局；手机宽度自动改成纵向信息流。
-如果你已经安装 Browser Mod，可以将同一张卡放入弹窗：
-
-```yaml
-action: fire-dom-event
-browser_mod:
-  service: browser_mod.popup
-  data:
-    title: 中华万年历
-    size: fullscreen
-    content:
-      type: custom:chinese-calendar-card
-      show_details: true
-      show_header: true
-```
-
-Browser Mod 不是本集成的必需依赖；也可以把卡片直接放在普通仪表盘中。
+`initial_style: wide` 让桌面和平板弹窗保持适当宽度；手机端由 Browser Mod 和卡片自动适配。卡片在较宽空间展示完整三栏，在较窄空间改为日历加两列黄历详情。无需安装 Mushroom、Button Card 或 Card Mod。
 
 ## 发布给 HACS 使用
 
 本仓库已经是 HACS 的 **Integration** 标准目录：`custom_components/chinese_calendar`、
-`manifest.json` 和根目录 `hacs.json` 都已就位。将整个仓库推送到 GitHub 后，创建
-`v0.1.0` Release；HACS 即可从自定义仓库安装和检查更新。
+`manifest.json` 和根目录 `hacs.json` 都已就位。将整个仓库推送到 GitHub 后，
+即可作为自定义仓库安装和检查更新；也可以为正式版本创建对应的 GitHub Release。
 
 ## 致谢与许可证
 

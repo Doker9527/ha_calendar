@@ -1,17 +1,31 @@
-type: button
-name: 中华万年历
-icon: mdi:calendar-star
+type: tile
 entity: sensor.jin_ri_nong_li
-show_state: true
+name: 中华万年历
+icon: mdi:calendar-month-outline
+color: blue
+vertical: false
+state_content: state
 tap_action:
   action: fire-dom-event
   browser_mod:
     service: browser_mod.popup
     data:
       title: 中华万年历
-      size: fullscreen
+      initial_style: wide
       content:
         type: custom:chinese-calendar-card
-          compact: true
-          show_details: true
+        compact: true
+        show_details: true
+        show_header: false
+icon_tap_action:
+  action: fire-dom-event
+  browser_mod:
+    service: browser_mod.popup
+    data:
+      title: 中华万年历
+      initial_style: wide
+      content:
+        type: custom:chinese-calendar-card
+        compact: true
+        show_details: true
         show_header: false
