@@ -12,6 +12,6 @@ tap_action:
       size: fullscreen
       content:
         type: custom:chinese-calendar-card
-        compact: true
-        show_details: false
+          compact: true
+          show_details: true
         show_header: false
