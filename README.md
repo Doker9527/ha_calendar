@@ -4,6 +4,8 @@
 [`lunar-python`](https://github.com/6tail/lunar-python) 计算农历、节气、节日、
 干支、生肖、宜忌、冲煞和吉神方位。
 
+跨电脑继续开发及当前待排查问题见 [`HANDOFF.md`](HANDOFF.md)。
+
 ## 功能
 
 - 通过“设备与服务”界面添加，无需 YAML 配置集成
