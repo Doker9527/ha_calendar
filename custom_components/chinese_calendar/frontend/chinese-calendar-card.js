@@ -1,4 +1,4 @@
-const CARD_VERSION = "0.1.2";
+const CARD_VERSION = "0.1.3";
 
 class ChineseCalendarCard extends HTMLElement {
   static getStubConfig() { return { title: "中华万年历", show_details: true, show_header: true }; }
@@ -13,6 +13,23 @@ class ChineseCalendarCard extends HTMLElement {
     this._data = null;
     this._loading = false;
     this._error = "";
+    this._resizeObserver = null;
+  }
+
+  connectedCallback() {
+    if (typeof ResizeObserver === "undefined") return;
+    this._resizeObserver = new ResizeObserver(([entry]) => {
+      const width = entry?.contentRect.width;
+      if (!width) return;
+      this.toggleAttribute("data-narrow", width <= 760);
+      this.toggleAttribute("data-phone", width <= 600);
+    });
+    this._resizeObserver.observe(this);
+  }
+
+  disconnectedCallback() {
+    this._resizeObserver?.disconnect();
+    this._resizeObserver = null;
   }
 
   setConfig(config) {
@@ -192,6 +209,20 @@ class ChineseCalendarCard extends HTMLElement {
       @media(max-width:900px){.calendar-card{padding:12px;border-radius:var(--ha-card-border-radius,22px)}.card-title{margin-bottom:10px}.card-title h2{font-size:21px}.upper-layout{display:flex;height:auto;min-height:0;flex-direction:column}.center-column{order:1;min-height:0}.left-side,.right-side{display:none}.side{grid-template-columns:1fr 1fr;grid-template-rows:auto}.date-summary{padding:8px 12px}.date-row{min-height:25px;gap:10px;font-size:13px}.date-row b{width:34px}.date-row strong{font-size:15px}.calendar-shell{flex:none;min-height:0;padding:5px}.day{min-height:49px}.solar{font-size:14px}.lunar{font-size:10px}.fortune-days{overflow-x:auto;grid-template-columns:repeat(13,44px);padding-bottom:3px}.directions>div{grid-template-columns:repeat(5,1fr)}}
       @media(max-width:540px){.card-title{display:flex;margin:0 8px 10px}.card-title h2{font-size:22px}.close-button{width:30px;height:30px;font-size:30px}.calendar-card{padding:8px;border:0;border-radius:0;background:color-mix(in srgb,var(--panel) 70%,var(--surface));box-shadow:none}.almanac-layout,.upper-layout,.center-column,.mobile-details,.compact-calendar{gap:7px}.date-row{flex-wrap:wrap}.date-row em{margin-left:auto}.month-nav{grid-template-columns:32px 1fr auto 1fr 32px;font-size:13px}.weekdays div{padding:6px 1px;font-size:11px}.days{grid-template-rows:repeat(6,minmax(45px,1fr))}.day{min-height:45px;padding:4px 1px}.solar{font-size:13px}.lunar{font-size:9px}.date-summary,.calendar-shell,.fortune-strip,.directions,.mobile-tile{border-radius:14px;background:var(--surface)}.mobile-details{display:flex;flex-direction:column}.mobile-tile{gap:6px;padding:9px 10px}.mobile-tile b{font-size:14px}.mobile-tile span{font-size:11px}.desktop-directions{display:none}.mobile-directions{display:block}.fortune-strip h3{font-size:16px}.fortune-strip h3 small{display:block;margin:3px 0 0;font-size:11px}.fortune-row{gap:2px}.fortune-arrow{width:24px;font-size:26px}.fortune-days{min-width:0;overflow:hidden;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:0}.fortune-day{display:none}.fortune-day:nth-child(n+5):nth-child(-n+9){display:flex}.directions{padding:9px}.directions span{font-size:10px}}
       @media(max-width:900px){.mobile-details{display:flex;flex-direction:column;gap:8px}.desktop-directions{display:none}.mobile-directions{display:block}.calendar-shell{flex:none}.upper-layout{min-height:0;align-items:stretch}.center-column{min-height:0;width:100%}}
+      :host([data-narrow]) .almanac-layout,:host([data-narrow]) .upper-layout,:host([data-narrow]) .center-column{gap:8px}
+      :host([data-narrow]) .upper-layout{display:flex;height:auto;min-height:0;align-items:stretch;flex-direction:column}
+      :host([data-narrow]) .center-column{order:1;width:100%;min-height:0}
+      :host([data-narrow]) .left-side,:host([data-narrow]) .right-side,:host([data-narrow]) .desktop-directions{display:none}
+      :host([data-narrow]) .mobile-details{display:flex;flex-direction:column;gap:8px}
+      :host([data-narrow]) .mobile-directions{display:block}
+      :host([data-narrow]) .calendar-shell,:host([data-narrow]) .days{flex:0 0 auto;min-height:0}
+      :host([data-phone]) .calendar-card{padding:8px}
+      :host([data-phone]) .fortune-row{gap:3px}
+      :host([data-phone]) .fortune-arrow{width:24px}
+      :host([data-phone]) .fortune-days{min-width:0;overflow:hidden;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px;padding:0}
+      :host([data-phone]) .fortune-day{display:none}
+      :host([data-phone]) .fortune-day:nth-child(n+5):nth-child(-n+9){display:flex}
+      :host([data-phone]) .fortune-day b{white-space:nowrap}
       @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
     `;
   }
