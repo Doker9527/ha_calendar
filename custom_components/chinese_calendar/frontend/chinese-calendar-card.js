@@ -1,4 +1,4 @@
-const CARD_VERSION = "0.1.5";
+const CARD_VERSION = "0.1.6";
 
 class ChineseCalendarCard extends HTMLElement {
   static getStubConfig() { return { title: "中华万年历", show_details: true, show_header: true }; }
@@ -39,7 +39,7 @@ class ChineseCalendarCard extends HTMLElement {
 
   setConfig(config) {
     if (!config) throw new Error("缺少卡片配置");
-    this._config = { title: "中华万年历", show_details: true, show_header: true, ...config };
+    this._config = { title: "中华万年历", show_details: true, show_header: true, show_clock: false, ...config };
     this._render();
   }
 
@@ -48,7 +48,7 @@ class ChineseCalendarCard extends HTMLElement {
     if (!this._data && !this._loading) this._loadMonth();
   }
 
-  getCardSize() { return 12; }
+  getCardSize() { return this._config?.dashboard ? 2 : 12; }
   getGridOptions() { return { columns: 12, rows: 12, min_columns: 6 }; }
 
   _localIso(value) {
@@ -136,7 +136,20 @@ class ChineseCalendarCard extends HTMLElement {
 
   _renderDateSummary(day) {
     const isToday = day.date === this._localIso(new Date());
-    return `<section class="date-summary"><div class="date-copy"><div class="date-row"><b>公历</b><strong>${day.date}</strong><span>星期${this._escape(day.weekday)}</span>${isToday ? "<em>今天</em>" : ""}</div><div class="date-row"><b>农历</b><span>${this._escape(day.year_ganzhi)}年</span><strong>${this._escape(day.lunar)}</strong><span>${this._escape(day.zodiac)}年</span></div></div>${this._renderFlipClock()}</section>`;
+    return `<section class="date-summary"><div class="date-copy"><div class="date-row"><b>公历</b><strong>${day.date}</strong><span>星期${this._escape(day.weekday)}</span>${isToday ? "<em>今天</em>" : ""}</div><div class="date-row"><b>农历</b><span>${this._escape(day.year_ganzhi)}年</span><strong>${this._escape(day.lunar)}</strong><span>${this._escape(day.zodiac)}年</span></div></div>${this._config.show_clock ? this._renderFlipClock() : ""}</section>`;
+  }
+
+  _renderDashboard(day) {
+    const label = day.jieqi || day.lunar_festivals?.[0] || day.solar_festivals?.[0] || "今日黄历";
+    return `<button class="dashboard-calendar" type="button" aria-label="打开中华万年历"><span class="dashboard-date"><strong>${day.day}</strong><small>${this._viewMonth}月</small></span><span class="dashboard-copy"><em>${this._escape(this._config.title || "中华万年历")}</em><b>${this._escape(day.lunar)}</b><small>${this._escape(day.year_ganzhi)}年　星期${this._escape(day.weekday)}　${this._escape(label)}</small></span>${this._renderFlipClock()}<span class="dashboard-arrow" aria-hidden="true">›</span></button>`;
+  }
+
+  _openDashboardPopup() {
+    const action = this._config?.tap_action;
+    if (action?.action !== "fire-dom-event" || !action.browser_mod) return;
+    document.body.dispatchEvent(new CustomEvent("ll-custom", {
+      detail: { browser_mod: action.browser_mod }, bubbles: true, composed: true,
+    }));
   }
 
   _renderFlipClock() {
@@ -215,17 +228,19 @@ class ChineseCalendarCard extends HTMLElement {
   _render() {
     if (!this.shadowRoot || !this._config) return;
     const day = this._data?.days?.find((item) => item.date === this._selected);
-    const header = this._config.show_header === false ? "" : `<header class="card-title"><h2>${this._escape(this._config.title)}</h2><button class="close-button" aria-label="关闭">×</button></header>`;
+    const dashboard = this._config.dashboard === true;
+    const header = dashboard || this._config.show_header === false ? "" : `<header class="card-title"><h2>${this._escape(this._config.title)}</h2><button class="close-button" aria-label="关闭">×</button></header>`;
     const details = this._config.show_details !== false;
     const compact = this._config.compact === true;
-    const body = day ? `<div class="almanac-layout"><div class="upper-layout">${details ? this._renderLeft(day) : ""}<main class="center-column">${this._renderDateSummary(day)}${this._renderCalendar()}${this._renderFortuneStrip(day)}${details ? this._renderDirections(day) : ""}</main>${details ? this._renderRight(day) : ""}</div>${details ? this._renderMobileDetails(day) : ""}</div>` : "";
-    this.shadowRoot.innerHTML = `<style>${this._styles()}</style><ha-card class="calendar-card ${compact ? "compact-card" : ""}">${header}${this._error ? `<div class="message error">${this._escape(this._error)}</div>` : ""}${this._loading && !this._data ? '<div class="message">正在计算本月农历…</div>' : ""}${body}</ha-card>`;
+    const body = day ? dashboard ? this._renderDashboard(day) : `<div class="almanac-layout"><div class="upper-layout">${details ? this._renderLeft(day) : ""}<main class="center-column">${this._renderDateSummary(day)}${this._renderCalendar()}${this._renderFortuneStrip(day)}${details ? this._renderDirections(day) : ""}</main>${details ? this._renderRight(day) : ""}</div>${details ? this._renderMobileDetails(day) : ""}</div>` : "";
+    this.shadowRoot.innerHTML = `<style>${this._styles()}</style><ha-card class="${dashboard ? "dashboard-card" : `calendar-card ${compact ? "compact-card" : ""}`}">${header}${this._error ? `<div class="message error">${this._escape(this._error)}</div>` : ""}${this._loading && !this._data ? '<div class="message">正在计算本月农历…</div>' : ""}${body}</ha-card>`;
     this.shadowRoot.querySelector(".prev")?.addEventListener("click", () => this._changeMonth(-1));
     this.shadowRoot.querySelector(".next")?.addEventListener("click", () => this._changeMonth(1));
     this.shadowRoot.querySelector(".today-button")?.addEventListener("click", () => this._goToday());
     this.shadowRoot.querySelector(".close-button")?.addEventListener("click", () => this.dispatchEvent(new Event("close")));
     this.shadowRoot.querySelector(".fortune-prev")?.addEventListener("click", () => this._shiftSelected(-1));
     this.shadowRoot.querySelector(".fortune-next")?.addEventListener("click", () => this._shiftSelected(1));
+    this.shadowRoot.querySelector(".dashboard-calendar")?.addEventListener("click", () => this._openDashboardPopup());
     this.shadowRoot.querySelectorAll("[data-date]").forEach((button) => button.addEventListener("click", () => { this._selected = button.dataset.date; this._render(); }));
   }
 
@@ -233,6 +248,7 @@ class ChineseCalendarCard extends HTMLElement {
     return `
       :host{--surface:var(--ha-card-background,var(--card-background-color,#fff));--panel:var(--secondary-background-color,#f7f8fa);--text:var(--primary-text-color,#272a35);--muted:var(--secondary-text-color,#747b89);--line:var(--divider-color,rgba(80,88,104,.14));--accent:var(--info-color,var(--primary-color,#43a1f4));--good:var(--success-color,#26a65b);--bad:var(--error-color,#e74646);display:block;color:var(--text);font-family:var(--paper-font-body1_-_font-family,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif)}
       *{box-sizing:border-box}button{font:inherit}.calendar-card{display:block;width:100%;overflow:hidden;padding:clamp(12px,1.5vw,20px);border:1px solid var(--line);border-radius:var(--ha-card-border-radius,24px);background:var(--surface);box-shadow:var(--ha-card-box-shadow,0 8px 28px rgba(30,39,56,.07))}.card-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px 3px}.card-title h2{margin:0;font-size:26px;font-weight:720;letter-spacing:.02em}.close-button{width:34px;height:34px;border:0;color:var(--muted);background:transparent;font-size:34px;font-weight:300;line-height:1;cursor:pointer}.close-button:hover{color:var(--text)}
+      .dashboard-card{display:block;width:100%;overflow:hidden;border:1px solid var(--line);border-radius:var(--ha-card-border-radius,18px);background:var(--surface);box-shadow:var(--ha-card-box-shadow,0 5px 18px rgba(30,39,56,.07))}.dashboard-calendar{display:grid;width:100%;grid-template-columns:52px minmax(0,1fr) auto 18px;gap:12px;align-items:center;padding:12px;border:0;color:var(--text);background:linear-gradient(125deg,color-mix(in srgb,var(--accent) 10%,var(--surface)),var(--surface) 48%);text-align:left;cursor:pointer}.dashboard-calendar:hover{background:linear-gradient(125deg,color-mix(in srgb,var(--accent) 17%,var(--surface)),var(--surface) 52%)}.dashboard-date{display:flex;height:52px;flex-direction:column;align-items:center;justify-content:center;border-radius:13px;color:#fff;background:var(--accent);box-shadow:0 5px 12px color-mix(in srgb,var(--accent) 25%,transparent);line-height:1}.dashboard-date strong{font-size:24px}.dashboard-date small{margin-top:4px;font-size:11px}.dashboard-copy{display:flex;min-width:0;flex-direction:column;gap:3px}.dashboard-copy em{overflow:hidden;color:var(--accent);font-size:12px;font-style:normal;font-weight:650;white-space:nowrap;text-overflow:ellipsis}.dashboard-copy b{font-size:17px;line-height:1.25}.dashboard-copy small{overflow:hidden;color:var(--muted);font-size:11px;white-space:nowrap;text-overflow:ellipsis}.dashboard-card .flip-clock{margin-left:0}.dashboard-arrow{color:var(--muted);font-size:27px;font-weight:300}.dashboard-card .flip-digit{width:19px;height:28px;font-size:15px}
       .almanac-layout{display:flex;min-width:0;flex-direction:column;gap:10px}.compact-card{max-width:1100px;margin-inline:auto}.upper-layout{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.65fr) minmax(0,.75fr);align-items:stretch;gap:10px}.center-column{display:flex;min-width:0;flex-direction:column;gap:10px}.side{display:flex;min-width:0;flex-direction:column;gap:10px}.right-side{justify-content:space-between}.date-summary,.calendar-shell,.fortune-strip,.directions,.info-panel{border:1px solid var(--line);border-radius:13px;background:color-mix(in srgb,var(--panel) 48%,var(--surface));box-shadow:0 2px 8px rgba(25,35,50,.025)}
       .date-summary{padding:13px 17px}.date-row{display:flex;align-items:center;gap:clamp(10px,2vw,25px);min-height:31px;font-size:16px}.date-row b{width:42px}.date-row strong{font-size:19px}.date-row:first-child strong{color:var(--accent)}.date-row em{padding:3px 10px;border-radius:999px;color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);font-size:13px;font-style:normal}
       .date-summary{display:flex;align-items:center;flex-wrap:wrap;gap:7px 12px}.date-copy{flex:1 1 370px;min-width:0}.flip-clock{display:flex;align-items:center;gap:3px;flex:none;margin-left:auto;font-variant-numeric:tabular-nums;perspective:180px}.flip-digit{position:relative;display:grid;width:20px;height:29px;place-items:center;overflow:hidden;border:1px solid var(--line);border-radius:5px;color:var(--text);background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 9%,var(--surface)) 49%,color-mix(in srgb,var(--accent) 5%,var(--surface)) 50%);box-shadow:0 2px 4px rgba(25,35,50,.07);font-size:16px;font-weight:700;line-height:1}.flip-digit::after{position:absolute;top:50%;right:0;left:0;border-top:1px solid var(--line);content:""}.flip-digit.turning{animation:clock-flip .38s ease-out}.flip-separator{margin:0 1px;color:var(--accent);font-size:17px;font-weight:700}@keyframes clock-flip{from{transform:rotateX(-85deg);opacity:.5}to{transform:rotateX(0);opacity:1}}
@@ -263,6 +279,13 @@ class ChineseCalendarCard extends HTMLElement {
       :host([data-phone]) .fortune-day b{white-space:nowrap}
       :host([data-phone]) .date-copy{flex-basis:100%}
       :host([data-phone]) .flip-digit{width:18px;height:25px;font-size:14px}
+      :host([data-phone]) .dashboard-calendar{grid-template-columns:48px minmax(0,1fr) auto 14px;gap:8px;padding:10px}
+      :host([data-phone]) .dashboard-date{height:48px;border-radius:12px}
+      :host([data-phone]) .dashboard-date strong{font-size:22px}
+      :host([data-phone]) .dashboard-copy b{font-size:16px}
+      :host([data-phone]) .dashboard-card .flip-clock{gap:2px}
+      :host([data-phone]) .dashboard-card .flip-digit{width:15px;height:23px;font-size:12px}
+      :host([data-phone]) .dashboard-card .flip-separator{margin:0;font-size:14px}
       @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.flip-digit.turning{animation:none!important}}
     `;
   }
