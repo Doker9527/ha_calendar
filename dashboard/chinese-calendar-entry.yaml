@@ -1,7 +1,49 @@
-type: custom:chinese-calendar-tile
+type: tile
 entity: sensor.jin_ri_nong_li
 name: 中华万年历
+icon: mdi:calendar-month-outline
+color: blue
+vertical: false
+state_content: state
 tap_action:
+  action: fire-dom-event
+  browser_mod:
+    service: browser_mod.popup
+    data:
+      title: ""
+      initial_style: calendar-fit
+      style_sequence:
+        - calendar-fit
+      popup_styles:
+        - style: calendar-fit
+          include_styles:
+            - classic
+          styles: |
+            ha-dialog {
+              --popup-width: min(1180px, calc(100vw - 32px));
+              --popup-max-width: min(1180px, calc(100vw - 32px));
+              --popup-min-width: 0px;
+              --popup-min-height: 0px;
+              --popup-max-height: calc(100dvh - 32px);
+              --mdc-dialog-min-height: 0px;
+              --dialog-surface-margin-top: auto !important;
+              --dialog-content-padding: 0px;
+            }
+            .content .container { padding: 0 !important; }
+            @media (max-width: 600px) {
+              ha-dialog {
+                --popup-width: 100vw;
+                --popup-max-width: 100vw;
+                --popup-width-full: 100vw;
+                --popup-max-height: 100dvh;
+              }
+            }
+      content:
+        type: custom:chinese-calendar-card
+        compact: true
+        show_details: true
+        show_header: false
+icon_tap_action:
   action: fire-dom-event
   browser_mod:
     service: browser_mod.popup

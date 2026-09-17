@@ -1,6 +1,6 @@
 # 开发交接（2026-09-16）
 
-本文件用于在另一台电脑上继续开发。仓库：<https://github.com/Doker9527/ha_calendar>，默认分支 `main`。当前代码版本为 `0.1.7`。不要把 Home Assistant 登录信息、令牌或本地配置文件提交到此公开仓库。
+本文件用于在另一台电脑上继续开发。仓库：<https://github.com/Doker9527/ha_calendar>，默认分支 `main`。当前代码版本为 `0.1.4`。不要把 Home Assistant 登录信息、令牌或本地配置文件提交到此公开仓库。
 
 ## 在新电脑开始
 
@@ -25,10 +25,10 @@ node --check custom_components/chinese_calendar/frontend/chinese-calendar-card.j
 
 - `custom_components/chinese_calendar/`：HACS 集成、传感器、日期 API 与本地前端文件。
 - `custom_components/chinese_calendar/frontend/chinese-calendar-card.js`：万年历卡片布局与样式。
-- `dashboard/chinese-calendar-entry.yaml`：可直接粘贴到 Home Assistant 仪表盘的时钟入口及 Browser Mod 弹窗配置。
+- `dashboard/chinese-calendar-entry.yaml`：可直接粘贴到 Home Assistant 仪表盘的 Tile 入口及 Browser Mod 弹窗配置。
 - `README.md`：安装、资源地址和使用说明。
 
-Home Assistant 仪表盘资源地址为 `/chinese-calendar/chinese-calendar-card.js?v=0.1.7`，类型为 JavaScript 模块。仪表盘入口使用 `custom:chinese-calendar-tile`，显示农历和实时翻页时钟；弹窗仍使用无时钟的 `custom:chinese-calendar-card`，无需将 HACS 的 `update` 实体填入卡片。示例入口实体 `sensor.jin_ri_nong_li` 应按实际 HA 实体 ID 调整。
+Home Assistant 仪表盘资源地址为 `/chinese-calendar/chinese-calendar-card.js?v=0.1.4`，类型为 JavaScript 模块。弹窗使用 `custom:chinese-calendar-card`，无需将 HACS 的 `update` 实体填入卡片。示例入口实体 `sensor.jin_ri_nong_li` 应按实际 HA 实体 ID 调整。
 
 ## 尚未解决：手机端仍显示旧详情布局
 
