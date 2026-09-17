@@ -36,7 +36,7 @@ HACS 会自动把集成放到 `/config/custom_components/chinese_calendar`。首
 4. 打开 **设置 → 仪表盘 → 资源**，添加：
 
    ```text
-   /chinese-calendar/chinese-calendar-card.js?v=0.1.4
+   /chinese-calendar/chinese-calendar-card.js?v=0.1.7
    ```
 
    资源类型选择“JavaScript 模块”。
@@ -60,11 +60,11 @@ HACS 会自动把集成放到 `/config/custom_components/chinese_calendar`。首
 
 ## 仪表盘入口与弹窗
 
-在仪表盘中添加一张“手动”卡片，切换到 YAML 编辑，粘贴下面配置。仪表盘只显示一张横向 Tile 卡片，名称下面显示今日农历；点击后打开完整万年历。`sensor.jin_ri_nong_li` 是示例中使用的实际实体 ID，如果你的实体 ID 不同，请替换。
+在仪表盘中添加一张“手动”卡片，切换到 YAML 编辑，粘贴示例配置。仪表盘显示与原 Tile 相近的圆角入口，名称下方同时显示今日农历与实时翻页时钟；点击后打开原来的完整万年历，弹窗内没有时钟。`sensor.jin_ri_nong_li` 是示例中使用的实际实体 ID，如果你的实体 ID 不同，请替换。
 
-需要先安装 Browser Mod 2.6 或更新版本，并在 **设置 → 仪表盘 → 资源** 中加入 `/chinese-calendar/chinese-calendar-card.js?v=0.1.4`，资源类型选择“JavaScript 模块”。若已经添加旧资源，编辑原条目的版本号，不要重复新增。手机上还需完全关闭 Home Assistant App 或浏览器标签页后重新打开，以清除旧前端脚本。
+需要先安装 Browser Mod 2.6 或更新版本，并在 **设置 → 仪表盘 → 资源** 中加入 `/chinese-calendar/chinese-calendar-card.js?v=0.1.7`，资源类型选择“JavaScript 模块”。若已经添加旧资源，编辑原条目的版本号，不要重复新增。手机上还需完全关闭 Home Assistant App 或浏览器标签页后重新打开，以清除旧前端脚本。
 
-完整可复制配置位于 [`dashboard/chinese-calendar-entry.yaml`](dashboard/chinese-calendar-entry.yaml)。弹窗不显示重复标题；桌面和平板按日历内容收紧弹窗，手机使用屏幕宽度并在内容过长时滚动。
+完整可复制配置位于 [`dashboard/chinese-calendar-entry.yaml`](dashboard/chinese-calendar-entry.yaml)，入口类型为 `custom:chinese-calendar-tile`。弹窗仍使用 `custom:chinese-calendar-card`，不显示时钟或重复标题；桌面和平板按日历内容收紧弹窗，手机使用屏幕宽度并在内容过长时滚动。
 
 `fire-dom-event` 是 Browser Mod 的自定义动作。Home Assistant 的可视化编辑器可能提示“不支持可视化编辑器”，这不代表 YAML 无效；继续使用 YAML 编辑并保存即可。
 

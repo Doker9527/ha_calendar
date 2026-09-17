@@ -1,4 +1,4 @@
-const CARD_VERSION = "0.1.4";
+const CARD_VERSION = "0.1.7";
 
 class ChineseCalendarCard extends HTMLElement {
   static getStubConfig() { return { title: "中华万年历", show_details: true, show_header: true }; }
@@ -236,7 +236,105 @@ class ChineseCalendarCard extends HTMLElement {
   }
 }
 
+class ChineseCalendarTile extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: "open" });
+    this._timer = null;
+  }
+
+  setConfig(config) {
+    if (!config) throw new Error("缺少卡片配置");
+    this._config = { name: "中华万年历", entity: "sensor.jin_ri_nong_li", ...config };
+    this._render();
+  }
+
+  set hass(hass) {
+    this._hass = hass;
+    const state = this._lunarState();
+    const label = this.shadowRoot?.querySelector(".lunar-state");
+    if (label) label.textContent = state;
+    else this._render();
+  }
+
+  connectedCallback() {
+    this._timer ??= setInterval(() => this._updateClock(), 1000);
+    this._updateClock();
+  }
+
+  disconnectedCallback() {
+    clearInterval(this._timer);
+    this._timer = null;
+  }
+
+  getCardSize() { return 2; }
+  getGridOptions() { return { columns: 6, rows: 2, min_columns: 6 }; }
+
+  _escape(value) {
+    return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+  }
+
+  _lunarState() {
+    const state = this._hass?.states?.[this._config?.entity]?.state;
+    return state && !["unknown", "unavailable"].includes(state) ? state : "农历加载中";
+  }
+
+  _clockParts() {
+    const now = new Date();
+    return [now.getHours(), now.getMinutes(), now.getSeconds()]
+      .map((part) => String(part).padStart(2, "0"));
+  }
+
+  _renderClock() {
+    const parts = this._clockParts();
+    return `<time class="tile-clock" datetime="${parts.join(":")}" aria-label="当前时间 ${parts.join(":")}">${parts.join("").split("").map((digit, index) => `${index === 2 || index === 4 ? '<span class="colon" aria-hidden="true">:</span>' : ""}<span class="digit" aria-hidden="true">${digit}</span>`).join("")}</time>`;
+  }
+
+  _updateClock() {
+    const clock = this.shadowRoot?.querySelector(".tile-clock");
+    if (!clock) return;
+    const parts = this._clockParts();
+    const time = parts.join(":");
+    clock.dateTime = time;
+    clock.setAttribute("aria-label", `当前时间 ${time}`);
+    const digits = parts.join("");
+    clock.querySelectorAll(".digit").forEach((element, index) => {
+      if (element.textContent === digits[index]) return;
+      element.textContent = digits[index];
+      element.classList.remove("turning");
+      void element.offsetWidth;
+      element.classList.add("turning");
+    });
+  }
+
+  _openPopup() {
+    const action = this._config?.tap_action;
+    if (action?.action !== "fire-dom-event" || !action.browser_mod) return;
+    document.body.dispatchEvent(new CustomEvent("ll-custom", {
+      detail: { browser_mod: action.browser_mod }, bubbles: true, composed: true,
+    }));
+  }
+
+  _render() {
+    if (!this._config) return;
+    this.shadowRoot.innerHTML = `<style>
+      :host{--tile-surface:var(--ha-card-background,var(--card-background-color,#f7f9fc));--tile-text:var(--primary-text-color,#2d3340);--tile-muted:var(--secondary-text-color,#6d7888);--tile-accent:var(--info-color,var(--primary-color,#258ee0));display:block;color:var(--tile-text);font-family:var(--paper-font-body1_-_font-family,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif)}
+      *{box-sizing:border-box}ha-card{display:block;overflow:hidden;border:1px solid color-mix(in srgb,var(--tile-surface) 82%,white);border-radius:32px;background:color-mix(in srgb,var(--tile-accent) 4%,var(--tile-surface));box-shadow:var(--ha-card-box-shadow,0 10px 28px rgba(35,52,76,.10))}
+      button{display:flex;width:100%;min-height:98px;align-items:center;gap:17px;padding:15px 16px;border:0;color:inherit;background:transparent;text-align:left;cursor:pointer;font:inherit}button:hover{background:color-mix(in srgb,var(--tile-accent) 6%,transparent)}button:focus-visible{outline:2px solid var(--tile-accent);outline-offset:-3px}
+      .icon-shell{display:grid;width:64px;height:64px;flex:none;place-items:center;border-radius:50%;color:var(--tile-accent);background:color-mix(in srgb,var(--tile-accent) 15%,var(--tile-surface))}.icon-shell svg{width:33px;height:33px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+      .content{display:flex;min-width:0;flex:1;flex-direction:column;gap:3px}.name{overflow:hidden;font-size:20px;font-weight:650;line-height:1.2;white-space:nowrap;text-overflow:ellipsis}.lower{display:flex;min-width:0;align-items:center;flex-wrap:wrap;gap:3px 9px}.lunar-state{overflow:hidden;font-size:17px;line-height:1.25;white-space:nowrap;text-overflow:ellipsis}
+      .tile-clock{display:flex;align-items:center;gap:1px;flex:none;margin-left:auto;font-variant-numeric:tabular-nums;perspective:160px}.digit{position:relative;display:grid;width:10px;height:19px;place-items:center;border:1px solid color-mix(in srgb,var(--tile-accent) 18%,transparent);border-radius:3px;color:var(--tile-text);background:linear-gradient(to bottom,color-mix(in srgb,var(--tile-accent) 12%,var(--tile-surface)) 49%,color-mix(in srgb,var(--tile-accent) 5%,var(--tile-surface)) 50%);font-size:11px;font-weight:700;line-height:1;box-shadow:0 1px 2px rgba(35,52,76,.08)}.digit::after{position:absolute;top:50%;right:0;left:0;border-top:1px solid color-mix(in srgb,var(--tile-accent) 15%,transparent);content:""}.digit.turning{animation:turn .38s ease-out}.colon{color:var(--tile-accent);font-size:11px;font-weight:700}@keyframes turn{from{transform:rotateX(-85deg);opacity:.45}to{transform:rotateX(0);opacity:1}}
+      @media(max-width:330px){button{gap:12px;padding:12px}.icon-shell{width:58px;height:58px}.name{font-size:18px}.lunar-state{font-size:15px}}
+      @media(prefers-reduced-motion:reduce){.digit.turning{animation:none}}
+    </style><ha-card><button type="button" aria-label="打开中华万年历"><span class="icon-shell"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="1.5"/><path d="M7 3v4M17 3v4M3 10h18M7.5 13.5h1M11.5 13.5h1M15.5 13.5h1M7.5 17h1M11.5 17h1M15.5 17h1"/></svg></span><span class="content"><span class="name">${this._escape(this._config.name)}</span><span class="lower"><span class="lunar-state">${this._escape(this._lunarState())}</span>${this._renderClock()}</span></span></button></ha-card>`;
+    this.shadowRoot.querySelector("button")?.addEventListener("click", () => this._openPopup());
+  }
+}
+
 if (!customElements.get("chinese-calendar-card")) customElements.define("chinese-calendar-card", ChineseCalendarCard);
+if (!customElements.get("chinese-calendar-tile")) customElements.define("chinese-calendar-tile", ChineseCalendarTile);
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "chinese-calendar-card", name: "中华万年历", description: "响应式公历、农历与每日黄历。", preview: true });
+window.customCards.push({ type: "chinese-calendar-tile", name: "中华万年历入口", description: "农历与翻页时钟入口卡片。", preview: true });
 console.info(`%c 中华万年历 %c v${CARD_VERSION} `, "color:#fff;background:#43a1f4;padding:3px 6px", "color:#334;background:#eef3f8;padding:3px 6px");
