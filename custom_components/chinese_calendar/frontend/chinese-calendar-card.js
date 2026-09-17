@@ -1,4 +1,4 @@
-const CARD_VERSION = "0.1.5";
+const CARD_VERSION = "0.1.4";
 
 class ChineseCalendarCard extends HTMLElement {
   static getStubConfig() { return { title: "中华万年历", show_details: true, show_header: true }; }
@@ -14,12 +14,9 @@ class ChineseCalendarCard extends HTMLElement {
     this._loading = false;
     this._error = "";
     this._resizeObserver = null;
-    this._clockTimer = null;
   }
 
   connectedCallback() {
-    this._clockTimer ??= setInterval(() => this._updateClock(), 1000);
-    this._updateClock();
     if (typeof ResizeObserver === "undefined") return;
     this._resizeObserver = new ResizeObserver(([entry]) => {
       const width = entry?.contentRect.width;
@@ -31,8 +28,6 @@ class ChineseCalendarCard extends HTMLElement {
   }
 
   disconnectedCallback() {
-    clearInterval(this._clockTimer);
-    this._clockTimer = null;
     this._resizeObserver?.disconnect();
     this._resizeObserver = null;
   }
@@ -136,31 +131,7 @@ class ChineseCalendarCard extends HTMLElement {
 
   _renderDateSummary(day) {
     const isToday = day.date === this._localIso(new Date());
-    return `<section class="date-summary"><div class="date-copy"><div class="date-row"><b>公历</b><strong>${day.date}</strong><span>星期${this._escape(day.weekday)}</span>${isToday ? "<em>今天</em>" : ""}</div><div class="date-row"><b>农历</b><span>${this._escape(day.year_ganzhi)}年</span><strong>${this._escape(day.lunar)}</strong><span>${this._escape(day.zodiac)}年</span></div></div>${this._renderFlipClock()}</section>`;
-  }
-
-  _renderFlipClock() {
-    const now = new Date();
-    const time = [now.getHours(), now.getMinutes(), now.getSeconds()].map((part) => String(part).padStart(2, "0")).join(":");
-    return `<time class="flip-clock" datetime="${time}" aria-label="当前时间 ${time}">${[...time].map((char) => char === ":" ? '<span class="flip-separator" aria-hidden="true">:</span>' : `<span class="flip-digit" aria-hidden="true">${char}</span>`).join("")}</time>`;
-  }
-
-  _updateClock() {
-    const clock = this.shadowRoot?.querySelector(".flip-clock");
-    if (!clock) return;
-    const now = new Date();
-    const parts = [now.getHours(), now.getMinutes(), now.getSeconds()].map((part) => String(part).padStart(2, "0"));
-    const time = parts.join(":");
-    clock.dateTime = time;
-    clock.setAttribute("aria-label", `当前时间 ${time}`);
-    const digits = parts.join("");
-    clock.querySelectorAll(".flip-digit").forEach((digit, index) => {
-      if (digit.textContent === digits[index]) return;
-      digit.textContent = digits[index];
-      digit.classList.remove("turning");
-      void digit.offsetWidth;
-      digit.classList.add("turning");
-    });
+    return `<section class="date-summary"><div class="date-row"><b>公历</b><strong>${day.date}</strong><span>星期${this._escape(day.weekday)}</span>${isToday ? "<em>今天</em>" : ""}</div><div class="date-row"><b>农历</b><span>${this._escape(day.year_ganzhi)}年</span><strong>${this._escape(day.lunar)}</strong><span>${this._escape(day.zodiac)}年</span></div></section>`;
   }
 
   _renderCalendar() {
@@ -235,7 +206,6 @@ class ChineseCalendarCard extends HTMLElement {
       *{box-sizing:border-box}button{font:inherit}.calendar-card{display:block;width:100%;overflow:hidden;padding:clamp(12px,1.5vw,20px);border:1px solid var(--line);border-radius:var(--ha-card-border-radius,24px);background:var(--surface);box-shadow:var(--ha-card-box-shadow,0 8px 28px rgba(30,39,56,.07))}.card-title{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px 3px}.card-title h2{margin:0;font-size:26px;font-weight:720;letter-spacing:.02em}.close-button{width:34px;height:34px;border:0;color:var(--muted);background:transparent;font-size:34px;font-weight:300;line-height:1;cursor:pointer}.close-button:hover{color:var(--text)}
       .almanac-layout{display:flex;min-width:0;flex-direction:column;gap:10px}.compact-card{max-width:1100px;margin-inline:auto}.upper-layout{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.65fr) minmax(0,.75fr);align-items:stretch;gap:10px}.center-column{display:flex;min-width:0;flex-direction:column;gap:10px}.side{display:flex;min-width:0;flex-direction:column;gap:10px}.right-side{justify-content:space-between}.date-summary,.calendar-shell,.fortune-strip,.directions,.info-panel{border:1px solid var(--line);border-radius:13px;background:color-mix(in srgb,var(--panel) 48%,var(--surface));box-shadow:0 2px 8px rgba(25,35,50,.025)}
       .date-summary{padding:13px 17px}.date-row{display:flex;align-items:center;gap:clamp(10px,2vw,25px);min-height:31px;font-size:16px}.date-row b{width:42px}.date-row strong{font-size:19px}.date-row:first-child strong{color:var(--accent)}.date-row em{padding:3px 10px;border-radius:999px;color:var(--accent);background:color-mix(in srgb,var(--accent) 13%,transparent);font-size:13px;font-style:normal}
-      .date-summary{display:flex;align-items:center;flex-wrap:wrap;gap:7px 12px}.date-copy{flex:1 1 370px;min-width:0}.flip-clock{display:flex;align-items:center;gap:3px;flex:none;margin-left:auto;font-variant-numeric:tabular-nums;perspective:180px}.flip-digit{position:relative;display:grid;width:20px;height:29px;place-items:center;overflow:hidden;border:1px solid var(--line);border-radius:5px;color:var(--text);background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 9%,var(--surface)) 49%,color-mix(in srgb,var(--accent) 5%,var(--surface)) 50%);box-shadow:0 2px 4px rgba(25,35,50,.07);font-size:16px;font-weight:700;line-height:1}.flip-digit::after{position:absolute;top:50%;right:0;left:0;border-top:1px solid var(--line);content:""}.flip-digit.turning{animation:clock-flip .38s ease-out}.flip-separator{margin:0 1px;color:var(--accent);font-size:17px;font-weight:700}@keyframes clock-flip{from{transform:rotateX(-85deg);opacity:.5}to{transform:rotateX(0);opacity:1}}
       .calendar-shell{display:flex;min-width:0;flex-direction:column;overflow:hidden;padding:9px}.month-nav{display:grid;grid-template-columns:38px 1fr auto 1fr 38px;align-items:center;gap:6px;padding:1px 5px 8px;text-align:center;font-weight:620}.nav-button,.today-button{height:34px;border:0;border-radius:9px;color:var(--text);background:transparent;cursor:pointer}.nav-button{display:grid;place-items:center}.nav-button svg{width:20px;height:20px;fill:none;stroke:var(--accent);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.today-button{padding:0 14px;background:color-mix(in srgb,var(--accent) 11%,transparent)}.nav-button:hover,.today-button:hover{background:color-mix(in srgb,var(--accent) 18%,transparent)}
       .weekdays,.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}.days{flex:1;grid-template-rows:repeat(6,minmax(52px,1fr))}.weekdays div{padding:8px 2px;text-align:center;color:var(--muted);font-size:13px;font-weight:650}.weekend{color:var(--bad)!important}.day{position:relative;min-width:0;min-height:52px;padding:5px 2px;border:0;border-radius:9px;color:var(--text);background:transparent;text-align:center;cursor:pointer}.day:hover{background:color-mix(in srgb,var(--accent) 8%,transparent)}.day.selected{color:#fff!important;background:var(--accent);box-shadow:0 4px 12px color-mix(in srgb,var(--accent) 25%,transparent)}.day.today:not(.selected){box-shadow:inset 0 0 0 2px var(--accent)}.day.selected span{color:#fff!important}.day.outside{opacity:.28}.solar{display:block;font-size:17px;font-weight:650}.lunar{display:block;overflow:hidden;margin-top:3px;color:var(--muted);font-size:11px;white-space:nowrap;text-overflow:ellipsis}.lunar.special{color:var(--good);font-weight:650}
       .fortune-strip{padding:10px}.fortune-strip h3,.directions h3{margin:0 0 8px;font-size:14px}.fortune-strip h3 small{margin-left:6px;color:var(--muted);font-weight:400}.fortune-row{display:flex;align-items:stretch;gap:5px}.fortune-days{display:grid;flex:1;grid-template-columns:repeat(13,minmax(34px,1fr));gap:4px}.fortune-arrow{display:grid;width:22px;flex:none;place-items:center;border:0;border-radius:8px;color:var(--muted);background:transparent;font-size:28px;line-height:1;cursor:pointer}.fortune-arrow:hover{color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,transparent)}.fortune-day{display:flex;min-width:0;flex-direction:column;gap:2px;align-items:center;padding:5px 1px;border:1px solid var(--line);border-radius:8px;color:var(--text);background:transparent;cursor:pointer}.fortune-day.active{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,transparent)}.fortune-day span{font-size:10px;color:var(--muted)}.fortune-day b{font-size:11px}.fortune-day em{font-size:11px;font-style:normal}.lucky{color:var(--good)}.unlucky{color:var(--bad)}.plain{color:var(--muted)}
@@ -261,9 +231,7 @@ class ChineseCalendarCard extends HTMLElement {
       :host([data-phone]) .fortune-day{display:none}
       :host([data-phone]) .fortune-day:nth-child(n+5):nth-child(-n+9){display:flex}
       :host([data-phone]) .fortune-day b{white-space:nowrap}
-      :host([data-phone]) .date-copy{flex-basis:100%}
-      :host([data-phone]) .flip-digit{width:18px;height:25px;font-size:14px}
-      @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}.flip-digit.turning{animation:none!important}}
+      @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
     `;
   }
 }
